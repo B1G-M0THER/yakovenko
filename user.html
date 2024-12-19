@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web App with Encryption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>Web App with Encryption</h1>
+    </nav>
+    <div id="authPage" class="container">
+        <h2>Authorization</h2>
+        <form id="authForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <button id="registerButton">Register</button></p>
+    </div>
+
+    <div id="registerPage" class="container hidden">
+        <h2>Register</h2>
+        <form id="registerForm">
+            <label for="regUsername">Username:</label>
+            <input type="text" id="regUsername" required><br><br>
+            <label for="regPassword">Password:</label>
+            <input type="password" id="regPassword" required><br><br>
+            <button type="submit">Register</button>
+        </form>
+        <button id="backToLogin">Back to Login</button>
+    </div>
+
+    <div id="adminPage" class="container hidden">
+        <h2>Admin Panel</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Password</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                <!-- User data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="userPage" class="container hidden">
+        <h2>Symmetric Encryption</h2>
+        <p>
+            Symmetric encryption is a type of encryption where the same key is used to encrypt and decrypt the data. It is fast and efficient for encrypting large amounts of data, but the challenge lies in securely sharing the key between the sender and the receiver.
+        </p>
+    </div>
+
+    <script>
+        // Admin credentials stored in a simulated database
+        const adminCredentials = {
+            username: "admin",
+            password: "admin"
+        };
+
+        // Encryption utility functions
+        const encrypt = (data, key) => btoa(unescape(encodeURIComponent(data)));
+        const decrypt = (data, key) => decodeURIComponent(escape(atob(data)));
+
+        // Simulated Local Storage for users
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+
+        document.getElementById("authForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (username === adminCredentials.username && password === adminCredentials.password) {
+                showAdminPage();
+            } else {
+                const user = users.find(user => user.username === username && decrypt(user.password, "key") === password);
+                if (user) {
+                    showUserPage();
+                } else {
+                    alert("Invalid credentials!");
+                }
+            }
+        });
+
+        document.getElementById("registerForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const username = document.getElementById("regUsername").value;
+            const password = document.getElementById("regPassword").value;
+
+            const encryptedPassword = encrypt(password, "key");
+            users.push({ username, password: encryptedPassword });
+            localStorage.setItem("users", JSON.stringify(users));
+
+            alert("User registered successfully!");
+            showLoginPage();
+        });
+
+        document.getElementById("registerButton").addEventListener("click", function() {
+            showRegisterPage();
+        });
+
+        document.getElementById("backToLogin").addEventListener("click", function() {
+            showLoginPage();
+        });
+
+        function showAdminPage() {
+            document.getElementById("authPage").classList.add("hidden");
+            document.getElementById("registerPage").classList.add("hidden");
+            document.getElementById("userPage").classList.add("hidden");
+            document.getElementById("adminPage").classList.remove("hidden");
+
+            const usersTable = document.getElementById("usersTable");
+            usersTable.innerHTML = "";
+
+            users.forEach(user => {
+                const decryptedPassword = decrypt(user.password, "key");
+                const row = `<tr><td>${user.username}</td><td>${decryptedPassword}</td></tr>`;
+                usersTable.innerHTML += row;
+            });
+        }
+
+        function showUserPage() {
+            document.getElementById("authPage").classList.add("hidden");
+            document.getElementById("registerPage").classList.add("hidden");
+            document.getElementById("adminPage").classList.add("hidden");
+            document.getElementById("userPage").classList.remove("hidden");
+        }
+
+        function showRegisterPage() {
+            document.getElementById("authPage").classList.add("hidden");
+            document.getElementById("userPage").classList.add("hidden");
+            document.getElementById("adminPage").classList.add("hidden");
+            document.getElementById("registerPage").classList.remove("hidden");
+        }
+
+        function showLoginPage() {
+            document.getElementById("authPage").classList.remove("hidden");
+            document.getElementById("registerPage").classList.add("hidden");
+            document.getElementById("userPage").classList.add("hidden");
+            document.getElementById("adminPage").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>
